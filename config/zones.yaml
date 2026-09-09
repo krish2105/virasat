@@ -13,5 +13,5 @@ chowkris:
   - Ramchandraji
   - Topkhana Hazuri
   - Gangapole
-tile_size_m: 128
-tile_overlap_m: 16
+tile_size_m: 320   # 32 px at Sentinel-2 10 m; 80 px at Open Buildings 4 m
+tile_overlap_m: 32

@@ -1,0 +1,5 @@
+# Spatial splits: whole blocks are held out, never random tiles. Core tiles are
+# blocked by chowkri; buffer/outside tiles by compass sector around the core.
+val:  [Ghat Darwaza, buffer_SE, buffer_S]
+test: [Purani Basti, buffer_NW, buffer_N]
+# everything else is train
