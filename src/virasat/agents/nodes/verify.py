@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from langchain_core.language_models import BaseChatModel
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, model_validator
 
 from virasat.agents import llm
 from virasat.agents.state import AssessmentState
@@ -27,6 +27,14 @@ class VerifyOut(BaseModel):
     verdict: Literal["pass", "fail"]
     notes: list[str]
     failing_finding_indices: list[int]
+
+    @model_validator(mode="after")
+    def _fail_must_name_a_finding(self) -> VerifyOut:
+        """A rejection that names nothing is incoherent, not a rejection. The retry
+        loop asks again rather than letting the draft through on a shapeless verdict."""
+        if self.verdict == "fail" and not self.failing_finding_indices:
+            raise ValueError("verdict 'fail' requires at least one failing_finding_index")
+        return self
 
 
 def mechanical_checks(state: AssessmentState) -> list[str]:

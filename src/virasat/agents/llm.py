@@ -16,7 +16,7 @@ from virasat.llm.router import get_chat, model_spec
 
 log = structlog.get_logger()
 PROMPTS = Path(__file__).parent / "prompts"
-PROMPT_VERSIONS = {"assess": "assess.v2.md", "verify": "verify.v1.md"}
+PROMPT_VERSIONS = {"assess": "assess.v2.md", "verify": "verify.v2.md"}
 TOKENS: dict[str, int] = defaultdict(int)  # change_id -> tokens used in this process
 
 
