@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = ""
     cors_origins: str = "http://localhost:3000"
+    cookie_secure: bool = False
 
 
 settings = Settings()

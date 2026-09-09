@@ -55,7 +55,7 @@ def issue_session(response: Response, officer: Officer) -> None:
         token,
         httponly=True,
         samesite="lax",
-        secure=settings.virasat_cloud,
+        secure=settings.cookie_secure,
         max_age=int(TTL.total_seconds()),
     )
 

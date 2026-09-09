@@ -1,0 +1,25 @@
+# Slim runtime for the hosted API (no torch/rasterio; inference runs on the owner's machine).
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+pydantic==2.9.*
+pydantic-settings==2.5.*
+sqlalchemy==2.0.*
+geoalchemy2==0.15.*
+psycopg[binary]==3.2.*
+pgvector==0.3.*
+alembic==1.14.*
+structlog==24.4.*
+pyjwt==2.9.*
+argon2-cffi==23.*
+reportlab==4.2.*
+httpx==0.27.*
+pyyaml==6.*
+python-multipart==0.0.*
+shapely==2.0.*
+pyproj==3.7.*
+langchain-core==0.3.*
+langchain-ollama==0.2.*
+langchain-anthropic==0.3.*
+langgraph==0.2.*
+langgraph-checkpoint-postgres==2.0.*
+rank-bm25==0.2.*

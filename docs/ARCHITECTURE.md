@@ -25,6 +25,9 @@ data, blocking fairness gate, no personal data, verifier on a different model.
 | 7 | `config/settings.py` | `src/virasat/settings.py` | Keeps settings importable as a package module; `config/` holds YAML only. |
 | 8 | `dropped` table (§11.3) | `changes.status = 'dropped'` | One table, one status column; the audit log still records the drop. |
 | 9 | Deploy backend on Render | Render hosts the API only; batch pipeline + Ollama agent graph run on the owner's machine against `DATABASE_URL` | Render cannot host a 14B model; local-first (§2.6) preserved. |
+| 10 | `@react-three/fiber 8.17` + `drei 9.114` with React 19 | fiber 9.x + drei 10.x | R3F 8 targets React 18's reconciler; the pinned pair cannot coexist with React 19. |
+| 11 | `retrieve → assess` unconditional edge (§11.4) | conditional: zero clauses → `route` | Implements §11.3's own rule ("do not fall through with an empty context"). |
+| 12 | Officer id as free text on the decision endpoint | Self-hosted JWT sessions, argon2 hashes, roles officer/reviewer/admin | Owner-approved feature; an audit trail needs an identity. |
 
 ## Data on disk (all rows in `data/MANIFEST.md`)
 
@@ -77,10 +80,64 @@ refine it). Four chunks remain long (definitions list and the new-construction s
 SQLAlchemy 2 models (`db/models.py`), Alembic migration `b1fd1e47ebc2`. `audit_log`
 has BEFORE UPDATE/DELETE/TRUNCATE triggers that raise — proven by test.
 
+## Retrieval (`rag/`)
+
+bge-m3 (Ollama, 1024-d) embeddings in pgvector with an HNSW index (m=16,
+ef_construction=64). `hybrid_search`: SQL pre-filter on `applies_to_zone` and
+`applies_to_change_type` → BM25 (rank-bm25) and dense top-20 → reciprocal-rank
+fusion → `BAAI/bge-reranker-base` cross-encoder → top 5. Smoke check on the real
+corpus: "a historic building has been demolished" → ACG-8 *Demolition* at 0.95.
+Precision@3 is **BLOCKED** until the owner labels 60 pairs (`uv run label-clauses`).
+
+## Agents (`agents/`)
+
+State per §11.1. `triage` is pure Python; `retrieve` has no LLM; `assess`
+(qwen2.5:14b local / claude-sonnet-5 cloud, T=0.1) returns pydantic-validated JSON
+with one retry; `verify` (llama3.1:8b / claude-opus-5, T=0) runs mechanical checks
+(unretrieved clause, missing evidence, enforcement language) before the model;
+`route` writes status, findings and an audit row carrying git SHA, model ids,
+prompt versions and token count. Revision cap 2; two failures →
+`needs_human_rewrite`. Postgres checkpointer via `langgraph-checkpoint-postgres`.
+Nine tests on a scripted fake model cover the loop cap, drop/escalate bypass and
+the corpus-gap route.
+
+## Vision (`vision/`)
+
+Siamese ResNet-50 (shared branches, |Δ| head, focal loss), ViT-S facade classifier,
+flip/rot90/jitter augmentation only, temperature scaling + ECE. `train.py` refuses
+to run below 100 tile labels. `open_buildings.py` derives building-scale candidates
+from presence/height deltas (103 for 2016→2023); `infer.py` materialises them as
+`changes` rows with evidence crops. Detector metrics are **BLOCKED**.
+
+## API (`api/`) and frontend (`web/`)
+
+All §12 endpoints plus `/auth/*`, `/audit`, `/buildings/{id}/timeline`, `/visits`,
+`/notifications`, `/dossier.csv|.pdf`, `/metrics/health`. Reject requires a reason
+(422 otherwise); `/map/aggregate` is public and returns per-chowkri counts only
+(test asserts no property fields leak). Next 15 App Router, Tailwind 3.4 with the
+§13.2 tokens and a dark palette, `next-themes`, `next-intl` (en/hi), Fraunces +
+IBM Plex Sans/Devanagari + IBM Plex Mono. Landing: `InstancedMesh` massing of 2,724
+footprints with Open Buildings heights, Lenis + `motion/react` scroll → year,
+demolitions become wireframe ghosts, WebGL-loss and `?nogl` fall back to an
+isometric SVG, reduced motion gets a slider. Officer queue is keyboard-first
+(J/K/Enter/A/R/E). Five Playwright flows pass on desktop.
+
+## Evaluation (`eval/`)
+
+`uv run eval` → `eval/reports/<ts>/report.{md,json}`. Fairness gate per §14.3
+(`max_ratio 1.5`, needs ≥ 20 officer decisions in ≥ 2 chowkris). `--gate` exits
+non-zero only on a measured failure or a ≥ 0.02 regression; BLOCKED never fails
+the build and never prints a number.
+
 ## Status of Definitions of Done
 
 | Phase | Status |
 |---|---|
 | 0 Scaffold | Done: compose up with PostGIS 3.4.3 + pgvector 0.8.6, pytest/ruff/mypy green, both Ollama models present, CI file pushed to `krish2105/virasat` |
 | 1 Data | Manifest complete for everything on disk; pipeline produces pairs; quarantine reported; 10 landmarks spot-checked. LISS-4 and Mapillary BLOCKED. |
-| 2–7 | In progress — see later sections as they land |
+| 2 Vision | Code + tests done; training, calibration and every metric BLOCKED on labels |
+| 3 RAG | Corpus parsed and indexed, hybrid retrieval live; precision@3 BLOCKED on 60 labelled pairs |
+| 4 Agents | Five nodes, graph, checkpointer, loop cap tested; red-team catch rate BLOCKED |
+| 5 API + DB | Done: migrations from empty, append-only audit enforced by trigger, decision round-trip tested |
+| 6 Frontend | Done locally: keyboard queue, 3D scrub with fallback, e2e green; Lighthouse ≥ 95 to be run on the deployed URL |
+| 7 Eval + docs | Harness done; README/VIVA after deploy; ablations BLOCKED on labels |
