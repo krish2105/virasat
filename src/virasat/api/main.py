@@ -47,7 +47,7 @@ def health() -> schemas.Health:
     except Exception:
         db_ok = False
     ollama_ok = False
-    if mode() == "local":
+    if mode() == "local" and not settings.virasat_api_only:
         try:
             ollama_ok = (
                 httpx.get(f"{settings.ollama_base_url}/api/tags", timeout=2).status_code == 200
@@ -55,13 +55,13 @@ def health() -> schemas.Health:
         except httpx.HTTPError:
             ollama_ok = False
     models = {n: model_spec(n)["model"] for n in ("assess", "verify")}
-    ok = db_ok and (ollama_ok or mode() == "cloud")
+    ok = db_ok and (ollama_ok or mode() == "cloud" or settings.virasat_api_only)
     return schemas.Health(
         status="ok" if ok else "degraded",
         database=db_ok,
         ollama=ollama_ok,
         models=models,
-        mode=mode(),
+        mode="api-only" if settings.virasat_api_only else mode(),
     )
 
 

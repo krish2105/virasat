@@ -1,4 +1,9 @@
-"""Load data/corpus/clauses.jsonl into the `clauses` table with embeddings."""
+"""Load the citable clauses of data/corpus/clauses.jsonl into `clauses` with embeddings.
+
+The definitions sections (Regulations 3, ACG 11) are parsed and kept in the corpus file
+as part of the honest record, but they are not loaded here: a glossary entry defines a
+term, it is not a provision a building can breach, so it must never be offered to the
+assessor as a citable clause."""
 
 from __future__ import annotations
 
@@ -14,10 +19,15 @@ from virasat.rag.embed import embed_texts
 CLAUSES = Path("data/corpus/clauses.jsonl")
 
 
+def citable(row: dict[str, object]) -> bool:
+    return "Definitions" not in str(row["path"])
+
+
 def main() -> None:
     if not CLAUSES.exists():
         raise SystemExit("index: run virasat.rag.chunk first")
-    rows = [json.loads(line) for line in CLAUSES.read_text().splitlines()]
+    parsed = [json.loads(line) for line in CLAUSES.read_text().splitlines()]
+    rows = [r for r in parsed if citable(r)]
     texts = [f"{r['path']}\n{r['text']}" for r in rows]
     vectors = []
     for i in range(0, len(texts), 32):
@@ -40,7 +50,10 @@ def main() -> None:
                     embedding=v,
                 )
             )
-    print(f"index: upserted {len(rows)} clauses with {len(vectors[0])}-d embeddings")
+    print(
+        f"index: upserted {len(rows)} citable clauses with {len(vectors[0])}-d embeddings "
+        f"({len(parsed) - len(rows)} definitions chunks parsed but not indexed)"
+    )
 
 
 if __name__ == "__main__":

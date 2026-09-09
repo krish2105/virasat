@@ -41,6 +41,7 @@ def _render(state: AssessmentState) -> str:
             + "\n"
         )
     return llm.prompt("assess").format(
+        allowed_clause_ids="\n".join(f"- {c['clause_id']}" for c in state["retrieved_clauses"]),
         zone=state["zone"],
         change_type=state["change_type"],
         change_prob=f"{state['change_prob']:.2f}",

@@ -97,6 +97,12 @@ def test_mechanical_check_rejects_unretrieved_clause_and_enforcement() -> None:
     assert any("not retrieved" in n for n in notes) and any("enforcement" in n for n in notes)
 
 
+def test_mechanical_check_rejects_a_described_rather_than_referenced_evidence() -> None:
+    """A prose description is not image evidence; hard rule 2 needs the actual crop."""
+    s = state(draft_findings=[{**finding(), "evidence_ref": "visible in the after image"}])
+    assert any("is not the supplied evidence" in n for n in mechanical_checks(s))
+
+
 def test_verify_fails_mechanically_without_calling_model() -> None:
     out = verify(state(draft_findings=[finding("REG-99")]), fake())  # fake has no responses
     assert out["verifier_verdict"] == "fail" and out["revision_count"] == 1

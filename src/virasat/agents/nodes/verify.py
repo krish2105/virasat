@@ -31,12 +31,16 @@ class VerifyOut(BaseModel):
 
 def mechanical_checks(state: AssessmentState) -> list[str]:
     allowed = {c["clause_id"] for c in state["retrieved_clauses"]}
+    evidence = state["evidence"]["after_crop_uri"]
     notes = []
     for i, f in enumerate(state["draft_findings"]):
         if f["clause_id"] not in allowed:
             notes.append(f"finding {i}: cites {f['clause_id']} which was not retrieved")
-        if not f["evidence_ref"]:
-            notes.append(f"finding {i}: no evidence reference")
+        if f["evidence_ref"] != evidence:
+            notes.append(
+                f"finding {i}: evidence_ref {f['evidence_ref']!r} is not the supplied "
+                f"evidence {evidence!r}"
+            )
         if any(k in f["claim"].lower() for k in ENFORCEMENT):
             notes.append(f"finding {i}: recommends enforcement")
     return notes
