@@ -28,9 +28,7 @@ def record(
         f"| `{sha256(path)}` | {notes} |"
     )
     lines = MANIFEST.read_text().splitlines()
-    lines = [
-        ln for ln in lines if not ln.startswith((_PLACEHOLDER, f"| `{rel}` |"))
-    ]
+    lines = [ln for ln in lines if not ln.startswith((_PLACEHOLDER, f"| `{rel}` |"))]
     if not any(ln.startswith("| File |") for ln in lines):
         raise RuntimeError("MANIFEST.md has no table header")
     header = next(i for i, ln in enumerate(lines) if ln.startswith("| File |"))

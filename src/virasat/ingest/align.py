@@ -36,8 +36,15 @@ def load_stack(scene_dir: Path, bands: list[str]) -> tuple[Arr, rasterio.Affine,
                     src.crs, TARGET_CRS, src.width, src.height, *src.bounds
                 )
                 out = np.zeros((h, w), dtype=np.float32)
-                reproject(src.read(1), out, src_transform=src.transform, src_crs=src.crs,
-                          dst_transform=dst_t, dst_crs=TARGET_CRS, resampling=Resampling.bilinear)
+                reproject(
+                    src.read(1),
+                    out,
+                    src_transform=src.transform,
+                    src_crs=src.crs,
+                    dst_transform=dst_t,
+                    dst_crs=TARGET_CRS,
+                    resampling=Resampling.bilinear,
+                )
                 arrays.append(out)
                 transform, res = dst_t, dst_t.a
             else:

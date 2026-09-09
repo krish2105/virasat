@@ -185,7 +185,7 @@ def main() -> None:
     seed_rms = float(np.sqrt(np.mean(resid**2)))
     print(f"whc_boundary: seed affine from {len(CONTROL)} landmarks, RMS {seed_rms:.1f} m")
 
-    road_pts = np.array([p for ln in _polylines(page, GREY) for p in ln[:: 4]])
+    road_pts = np.array([p for ln in _polylines(page, GREY) for p in ln[::4]])
     osm_pts = _osm_road_vertices(to_utm)
     coef, rms, frac = _icp(coef, road_pts, osm_pts)
     scale = float(np.sqrt(abs(np.linalg.det(coef[:2]))))
@@ -193,8 +193,10 @@ def main() -> None:
     print(f"whc_boundary: RMS at nominal 1:10,000 scale would be {nominal:.2f} m (ICP {rms:.2f} m)")
     fitted = np.hstack([src, np.ones((len(src), 1))]) @ coef
     resid = np.linalg.norm(fitted - dst, axis=1)
-    print(f"whc_boundary: ICP on {len(road_pts)} map road vertices vs {len(osm_pts)} OSM vertices: "
-          f"matched {frac:.0%}, RMS {rms:.1f} m, scale {scale:.3f} m/pt (1:10,000 = 3.528)")
+    print(
+        f"whc_boundary: ICP on {len(road_pts)} map road vertices vs {len(osm_pts)} OSM vertices: "
+        f"matched {frac:.0%}, RMS {rms:.1f} m, scale {scale:.3f} m/pt (1:10,000 = 3.528)"
+    )
     for c, r in zip(CONTROL, resid, strict=True):
         print(f"  {c[0]:<22} landmark residual {r:6.1f} m")
     blue = _chain(_polylines(page, BLUE), tol=2.0)
@@ -217,10 +219,14 @@ def main() -> None:
     core = unary_union(core)
     areas = {"core": core.area / 1e4, "buffer": buffer_zone.area / 1e4}
     for k, v in areas.items():
-        print(f"  {k}: {v:.0f} ha (inscribed {INSCRIBED_HA[k]:.0f} ha, "
-              f"{100 * (v - INSCRIBED_HA[k]) / INSCRIBED_HA[k]:+.1f}%)")
-    print(f"  red ring: {len(red)} chain(s), main ring {len(red[0])} pts, "
-          f"closing gap {math.dist(red[0][0], red[0][-1]):.0f} pt")
+        print(
+            f"  {k}: {v:.0f} ha (inscribed {INSCRIBED_HA[k]:.0f} ha, "
+            f"{100 * (v - INSCRIBED_HA[k]) / INSCRIBED_HA[k]:+.1f}%)"
+        )
+    print(
+        f"  red ring: {len(red)} chain(s), main ring {len(red[0])} pts, "
+        f"closing gap {math.dist(red[0][0], red[0][-1]):.0f} pt"
+    )
 
     if rms > MAX_RMS_M:
         sys.exit(f"whc_boundary: RMS {rms:.1f} m exceeds {MAX_RMS_M} m; not writing boundaries")
@@ -230,18 +236,29 @@ def main() -> None:
         "source": "https://whc.unesco.org/document/176277",
         "method": "affine seeded on landmark symbols, refined by ICP of map road vertices "
         "against OpenStreetMap highway vertices",
-        "icp": {"matched_fraction": round(frac, 3), "map_vertices": int(len(road_pts)),
-                "osm_vertices": int(len(osm_pts)), "match_radius_m": ICP_MATCH_M},
+        "icp": {
+            "matched_fraction": round(frac, 3),
+            "map_vertices": int(len(road_pts)),
+            "osm_vertices": int(len(osm_pts)),
+            "match_radius_m": ICP_MATCH_M,
+        },
         "seed_rms_m": round(seed_rms, 1),
         "rms_if_nominal_1_10000_scale_m": round(nominal, 2),
-        "linear_scales_m_per_pt": {"x": round(float(np.linalg.norm(coef[0])), 4),
-                                    "y": round(float(np.linalg.norm(coef[1])), 4)},
+        "linear_scales_m_per_pt": {
+            "x": round(float(np.linalg.norm(coef[0])), 4),
+            "y": round(float(np.linalg.norm(coef[1])), 4),
+        },
         "core_ring_closing_gap_pt": round(math.dist(red[0][0], red[0][-1]), 1),
         "note": "Polygon areas are ~9.5% below the inscribed figures at the data-fitted scale; "
         "forcing the nominal scale worsens the road fit, so the map polygons are kept as drawn.",
         "control_points": [
-            {"label": c[0], "pdf": [c[1], c[2]], "lonlat": [c[3], c[4]], "osm": c[5],
-             "residual_m": round(float(r), 1)}
+            {
+                "label": c[0],
+                "pdf": [c[1], c[2]],
+                "lonlat": [c[3], c[4]],
+                "osm": c[5],
+                "residual_m": round(float(r), 1),
+            }
             for c, r in zip(CONTROL, resid, strict=True)
         ],
         "rms_m": round(rms, 1),
@@ -256,14 +273,20 @@ def main() -> None:
 
         wgs = sh_transform(to_wgs.transform, geom)
         path = OUT / f"{name}.geojson"
-        path.write_text(json.dumps({
-            "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "properties": {"zone": name, "area_ha": round(areas[name], 1)},
-                "geometry": mapping(wgs),
-            }],
-        }))
+        path.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {"zone": name, "area_ha": round(areas[name], 1)},
+                            "geometry": mapping(wgs),
+                        }
+                    ],
+                }
+            )
+        )
         return path
 
     for name, geom in (("core", core), ("buffer", buffer_zone)):

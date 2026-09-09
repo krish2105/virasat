@@ -66,7 +66,7 @@ def _lines(doc: fitz.Document) -> list[tuple[int, str]]:
     out = []
     for i, page in enumerate(doc, start=1):
         for ln in page.get_text().splitlines():
-            s = ln.strip()
+            s = ln.replace("\x00", "").strip()
             if s and not re.fullmatch(r"\d{1,3}", s):  # drop bare page numbers
                 out.append((i, s))
     return out

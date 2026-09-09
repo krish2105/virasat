@@ -90,12 +90,22 @@ def main() -> None:
             tile_id = f"{int(x0)}_{int(y0)}"
             lon, lat = to_wgs.transform(cx, cy)
             meta = {
-                "tile_id": tile_id, "x0": x0, "y0": y0, "size_m": tile_m, "res_m": res,
-                "centroid": [round(lon, 6), round(lat, 6)], "zone": zone, "chowkri_id": chowkri,
-                "spatial_block": block, "split": split,
-                "epoch_before": before_date.isoformat(), "epoch_after": after_date.isoformat(),
-                "season_mismatch": season_mismatch, "residual_px": round(resid, 3),
-                "quarantined": resid > MAX_RESIDUAL_PX, "source": "sentinel-2-l2a",
+                "tile_id": tile_id,
+                "x0": x0,
+                "y0": y0,
+                "size_m": tile_m,
+                "res_m": res,
+                "centroid": [round(lon, 6), round(lat, 6)],
+                "zone": zone,
+                "chowkri_id": chowkri,
+                "spatial_block": block,
+                "split": split,
+                "epoch_before": before_date.isoformat(),
+                "epoch_after": after_date.isoformat(),
+                "season_mismatch": season_mismatch,
+                "residual_px": round(resid, 3),
+                "quarantined": resid > MAX_RESIDUAL_PX,
+                "source": "sentinel-2-l2a",
             }
             dest = quarantine if meta["quarantined"] else tiles_dir
             np.savez_compressed(dest / f"{tile_id}.npz", before=b, after=a, meta=json.dumps(meta))
@@ -109,9 +119,13 @@ def main() -> None:
         npz = np.load(tiles_dir / f"{m['tile_id']}.npz")
         arrays += [npz["before"], npz["after"]]
     stack = np.concatenate(arrays, axis=1)
-    stats = {"bands": BANDS, "mean": stack.mean(axis=(1, 2)).tolist(),
-             "std": stack.std(axis=(1, 2)).tolist(), "computed_on": "train split only",
-             "n_train_tiles": len(train)}
+    stats = {
+        "bands": BANDS,
+        "mean": stack.mean(axis=(1, 2)).tolist(),
+        "std": stack.std(axis=(1, 2)).tolist(),
+        "computed_on": "train split only",
+        "n_train_tiles": len(train),
+    }
     (PROCESSED / "norm_stats.json").write_text(json.dumps(stats, indent=1))
     with (PROCESSED / "index.jsonl").open("w") as f:
         for m in index:
@@ -119,12 +133,17 @@ def main() -> None:
 
     q = sum(1 for m in index if m["quarantined"]) / len(index)
     summary = {
-        "tiles": len(index), "tile_px": px, "quarantine_rate": round(q, 4),
-        "residual_px": {"median": round(float(np.median(residuals)), 3),
-                        "p95": round(float(np.percentile(residuals, 95)), 3)},
+        "tiles": len(index),
+        "tile_px": px,
+        "quarantine_rate": round(q, 4),
+        "residual_px": {
+            "median": round(float(np.median(residuals)), 3),
+            "p95": round(float(np.percentile(residuals, 95)), 3),
+        },
         "by_zone": {z: sum(m["zone"] == z for m in index) for z in ("core", "buffer", "outside")},
         "by_split": {s: sum(m["split"] == s for m in index) for s in ("train", "val", "test")},
-        "season_mismatch": season_mismatch, "global_shift_px": [dy, dx],
+        "season_mismatch": season_mismatch,
+        "global_shift_px": [dy, dx],
     }
     (PROCESSED / "pipeline_report.json").write_text(json.dumps(summary, indent=1))
     log.info("pipeline_done", **summary)
