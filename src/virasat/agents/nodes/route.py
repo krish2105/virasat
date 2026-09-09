@@ -40,11 +40,21 @@ def decide(state: AssessmentState) -> tuple[str, ChangeStatus, str]:
     return "officer_queue", ChangeStatus.needs_human_rewrite, "normal"
 
 
-def route(state: AssessmentState) -> dict[str, Any]:
-    routed_to, status, priority = decide(state)
+def split_findings(state: AssessmentState, status: ChangeStatus) -> tuple[list[Any], list[Any]]:
+    """(storable, rejected). A clause id the model invented is not a citation: `clause_id`
+    is a foreign key onto the corpus, so an unretrieved id can only be logged."""
     findings = (
         state["final_findings"] if status == ChangeStatus.pending else state["draft_findings"]
     )
+    allowed = {c["clause_id"] for c in state["retrieved_clauses"]}
+    storable = [f for f in findings if f["clause_id"] in allowed]
+    rejected = [f for f in findings if f["clause_id"] not in allowed]
+    return storable, rejected
+
+
+def route(state: AssessmentState) -> dict[str, Any]:
+    routed_to, status, priority = decide(state)
+    findings, rejected = split_findings(state, status)
     with session_scope() as s:
         change = s.get(Change, uuid.UUID(state["change_id"]))
         if change is not None:
@@ -78,6 +88,7 @@ def route(state: AssessmentState) -> dict[str, Any]:
                     "triage": state["triage_reason"],
                     "errors": list(state["errors"]),
                     "verifier_notes": list(state["verifier_notes"]),
+                    "rejected_findings": rejected,
                 },
                 git_sha=git_sha(),
                 model_ids={n: model_spec(n)["model"] for n in ("assess", "verify")},

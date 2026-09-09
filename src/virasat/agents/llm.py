@@ -48,4 +48,5 @@ def call(node: str, change_id: str, text: str, llm: BaseChatModel | None = None)
         prompt_version=PROMPT_VERSIONS[node],
         tokens=used,
     )
+    log.debug("llm_raw", change_id=change_id, node=node, output=content)
     return content
