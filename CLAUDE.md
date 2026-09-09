@@ -40,7 +40,9 @@ drafts assessments for a human heritage officer to approve, reject, or escalate.
 One phase per session. Do not build ahead. State the Definition of Done explicitly at
 the end of the session, and update `docs/ARCHITECTURE.md` before finishing.
 
-Current phase: **0 — Scaffold**
+Current phase: **all phases, single continuous build** (owner decision 2026-09-09 —
+see `docs/ARCHITECTURE.md`). Phase DoDs remain as checkpoints; stop and report at every
+`⛔` in the plan.
 
 ## Commands
 
@@ -52,6 +54,8 @@ uv run ruff check .      # lint
 uv run mypy src          # types
 uv run pipeline          # data pipeline
 uv run eval              # evaluation harness + fairness gate
+uv run agents            # LangGraph batch over pending changes
+uv run seed-admin        # first officer account
 cd web && pnpm dev       # frontend
 ```
 

@@ -1,0 +1,17 @@
+crs: "EPSG:32643"
+boundaries:
+  core: data/boundaries/core.geojson
+  buffer: data/boundaries/buffer.geojson
+  chowkris: data/boundaries/chowkris.geojson
+chowkris:
+  - Sarhad
+  - Purani Basti
+  - Topkhana Desh
+  - Modikhana
+  - Vishveshwarji
+  - Ghat Darwaza
+  - Ramchandraji
+  - Topkhana Hazuri
+  - Gangapole
+tile_size_m: 128
+tile_overlap_m: 16

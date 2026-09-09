@@ -1,0 +1,4 @@
+# Per-chowkri false-positive-rate disparity gate. max(FPR)/min(FPR) above
+# max_ratio fails the build.
+max_ratio: 1.5
+min_labelled_per_chowkri: 20

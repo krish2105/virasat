@@ -1,0 +1,19 @@
+services:
+  db:
+    build: infra/postgres
+    environment:
+      POSTGRES_USER: virasat
+      POSTGRES_PASSWORD: virasat
+      POSTGRES_DB: virasat
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U virasat -d virasat"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

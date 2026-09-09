@@ -1,0 +1,15 @@
+nodes:
+  assess:
+    local:  {provider: ollama,    model: qwen2.5:14b-instruct, temperature: 0.1}
+    cloud:  {provider: anthropic, model: claude-sonnet-5,       temperature: 0.1}
+  verify:
+    local:  {provider: ollama,    model: llama3.1:8b,           temperature: 0.0}
+    cloud:  {provider: anthropic, model: claude-opus-5,         temperature: 0.0}
+embedding:
+  provider: ollama
+  model: bge-m3:567m
+  dimensions: 1024
+reranker:
+  provider: sentence-transformers
+  model: BAAI/bge-reranker-base
+default_mode: local
