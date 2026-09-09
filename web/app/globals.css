@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light: lime plaster ground, ink text. Dark: ink ground, plaster text.
+   Sandstone stays the structural colour in both; alarm is reserved for flagged changes. */
+:root {
+  --sandstone: 193 98 46;
+  --plaster: 242 235 224;
+  --indigo: 35 48 74;
+  --ink: 26 22 20;
+  --alarm: 196 54 31;
+  --muted: 138 128 120;
+  --ground: 242 235 224;
+  --surface: 250 246 239;
+  --line: 214 203 188;
+  --fg: 26 22 20;
+  --fg-muted: 92 84 78;
+  color-scheme: light;
+}
+.dark {
+  --ground: 26 22 20;
+  --surface: 36 31 28;
+  --line: 66 58 53;
+  --fg: 242 235 224;
+  --fg-muted: 176 166 156;
+  --indigo: 143 163 199;
+  --muted: 150 140 132;
+  color-scheme: dark;
+}
+
+html { scroll-behavior: auto; }
+body { @apply bg-ground text-fg font-sans antialiased; }
+:focus-visible { @apply outline-none ring-2 ring-sandstone ring-offset-2 ring-offset-ground; }
+::selection { background: rgb(var(--sandstone) / 0.25); }
+
+.kbd { @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-line bg-surface px-1 font-mono text-[11px] text-fg-muted; }
+.data { @apply font-mono text-[13px] tabular-nums; }
+.hairline { border-color: rgb(var(--line)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

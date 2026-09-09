@@ -50,6 +50,7 @@ def synthetic_id(osm_type: str, osm_id: int) -> str:
 
 def footprints(to_utm: Transformer) -> list[tuple[str, Polygon, tuple[float, float]]]:
     out = []
+    seen: set[str] = set()  # ways straddling a bbox quadrant appear in two parts
     for part in BUILDINGS:
         for e in json.loads(part.read_text())["elements"]:
             if e["type"] != "way" or "geometry" not in e:
@@ -57,10 +58,14 @@ def footprints(to_utm: Transformer) -> list[tuple[str, Polygon, tuple[float, flo
             ring = [(p["lon"], p["lat"]) for p in e["geometry"]]
             if len(ring) < 4:
                 continue
+            bid = synthetic_id(e["type"], e["id"])
+            if bid in seen:
+                continue
             poly = sh_transform(to_utm.transform, Polygon(ring))
             if poly.is_valid and poly.area >= MIN_AREA_M2:
+                seen.add(bid)
                 c = Polygon(ring).centroid
-                out.append((synthetic_id(e["type"], e["id"]), poly, (c.x, c.y)))
+                out.append((bid, poly, (c.x, c.y)))
     return out
 
 

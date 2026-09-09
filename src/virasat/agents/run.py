@@ -50,6 +50,8 @@ def initial_state(c: Change) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(prog="agents")
     parser.add_argument("--limit", type=int, default=50)
+    parser.add_argument("--zone", choices=["core", "buffer", "outside"], help="only this zone")
+    parser.add_argument("--change-type", dest="change_type", help="only this change type")
     args = parser.parse_args()
     assert_distinct_families()
     log.info(
@@ -60,13 +62,14 @@ def main() -> None:
     )
 
     with session_scope() as s:
-        pending = list(
-            s.scalars(
-                select(Change)
-                .where(Change.status == ChangeStatus.pending, Change.triage_decision.is_(None))
-                .limit(args.limit)
-            )
+        q = select(Change).where(
+            Change.status == ChangeStatus.pending, Change.triage_decision.is_(None)
         )
+        if args.zone:
+            q = q.where(Change.zone == args.zone)
+        if args.change_type:
+            q = q.where(Change.change_type == args.change_type)
+        pending = list(s.scalars(q.limit(args.limit)))
     if not pending:
         print("agents: no pending changes")
         return
