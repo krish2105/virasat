@@ -28,6 +28,10 @@ data, blocking fairness gate, no personal data, verifier on a different model.
 | 10 | `@react-three/fiber 8.17` + `drei 9.114` with React 19 | fiber 9.x + drei 10.x | R3F 8 targets React 18's reconciler; the pinned pair cannot coexist with React 19. |
 | 11 | `retrieve → assess` unconditional edge (§11.4) | conditional: zero clauses → `route` | Implements §11.3's own rule ("do not fall through with an empty context"). |
 | 12 | Officer id as free text on the decision endpoint | Self-hosted JWT sessions, argon2 hashes, roles officer/reviewer/admin | Owner-approved feature; an audit trail needs an identity. |
+| 13 | Definitions parsed as citable clauses | Regulations 3 and ACG 11 are parsed into `clauses.jsonl` but **not indexed**: 178 parsed, 137 citable | A glossary entry defines a term; it is not a provision a building can breach. The per-term split also generated unstable ids from body text (`ACG-11 New  Construction`, with the PDF's double space). `ACG-11 Should` held a top-5 retrieval slot and produced the invalid citation `ACG-11`. |
+| 14 | `assess.v1.md` listing clauses as `[id] heading` | `assess.v2.md` prints the allowed ids as an explicit list and demands a verbatim copy | qwen2.5:14b answered v1 with invented headings ("Architectural Styles"). Output moved to real-format ids immediately. |
+| 15 | `evidence_ref` checked non-empty | Must equal the supplied crop URI | `"X"` satisfied the old check, so hard rule 2 (image evidence) was not actually enforced. |
+| 16 | `verify.v1.md` listing its five tests as questions | `verify.v2.md`: notes are violations only, each naming an index and quoting the failing words; a `fail` naming no finding is invalid output | llama3.1:8b answered the questions into `notes`, so five of seven rejections were statements of *compliance* returned with verdict `fail`. |
 
 ## Data on disk (all rows in `data/MANIFEST.md`)
 
@@ -73,7 +77,7 @@ core 75 / buffer 155 / outside 550; train 431 / val 214 / test 135.
 Clause-aware parser → **178 chunks** (Regulations 122, General Guidelines 3,
 Architectural Control Guidelines 53), each with ancestor path, page, document SHA-256,
 `applies_to_zone`, `applies_to_change_type` (keyword-derived — a labelling pass should
-refine it). Four chunks remain long (definitions list and the new-construction section).
+refine it). Four chunks remain long (definitions list and the new-construction section). The two definitions sections (Regulations 3, ACG 11) account for 41 chunks; they stay in `clauses.jsonl` as the corpus record but are excluded from the index, so **137 clauses are citable**. Clause identifiers must come from the document's own numbering, never from its prose.
 
 ## Database
 
@@ -98,8 +102,10 @@ with one retry; `verify` (llama3.1:8b / claude-opus-5, T=0) runs mechanical chec
 `route` writes status, findings and an audit row carrying git SHA, model ids,
 prompt versions and token count. Revision cap 2; two failures →
 `needs_human_rewrite`. Postgres checkpointer via `langgraph-checkpoint-postgres`.
-Nine tests on a scripted fake model cover the loop cap, drop/escalate bypass and
-the corpus-gap route.
+Ten tests on a scripted fake model cover the loop cap, drop/escalate bypass and
+the corpus-gap route. `route` stores only findings citing a retrieved clause (`split_findings`); the rest go to the audit payload as `rejected_findings`, because `findings.clause_id` is a foreign key and a hallucinated citation previously crashed the run.
+
+**First real batch, 2026-09-09:** 101 candidates → 82 dropped with no model call, 5 escalated direct, 14 assessed. 11 findings stored, all citing a retrieved clause and a real evidence crop; 12 drafts rejected before storage; **0 findings passed verification**. The verifier rejects on substance — typically a topically related clause offered in support of a specific claim. Conservative in the safe direction, but a useful assessor would produce drafts that survive.
 
 ## Vision (`vision/`)
 
@@ -140,4 +146,4 @@ the build and never prints a number.
 | 4 Agents | Five nodes, graph, checkpointer, loop cap tested; red-team catch rate BLOCKED |
 | 5 API + DB | Done: migrations from empty, append-only audit enforced by trigger, decision round-trip tested |
 | 6 Frontend | Done locally: keyboard queue, 3D scrub with fallback, e2e green; Lighthouse ≥ 95 to be run on the deployed URL |
-| 7 Eval + docs | Harness done; README/VIVA after deploy; ablations BLOCKED on labels |
+| 7 Eval + docs | Harness done; README, VIVA and DEPLOY written 2026-09-09; ablations BLOCKED on labels |
