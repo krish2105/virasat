@@ -2,6 +2,7 @@ data/**
 !data/MANIFEST.md
 !data/boundaries/
 !data/boundaries/*.geojson
+!data/boundaries/*.json
 .env
 __pycache__/
 *.pt

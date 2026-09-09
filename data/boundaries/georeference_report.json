@@ -1,0 +1,199 @@
+{
+ "source": "https://whc.unesco.org/document/176277",
+ "method": "affine seeded on landmark symbols, refined by ICP of map road vertices against OpenStreetMap highway vertices",
+ "icp": {
+  "matched_fraction": 0.953,
+  "map_vertices": 105113,
+  "osm_vertices": 249851,
+  "match_radius_m": 40.0
+ },
+ "seed_rms_m": 57.0,
+ "rms_if_nominal_1_10000_scale_m": 15.98,
+ "linear_scales_m_per_pt": {
+  "x": 3.453,
+  "y": 3.377
+ },
+ "core_ring_closing_gap_pt": 84.9,
+ "note": "Polygon areas are ~9.5% below the inscribed figures at the data-fitted scale; forcing the nominal scale worsens the road fit, so the map polygons are kept as drawn.",
+ "control_points": [
+  {
+   "label": "Ajmeri Gate",
+   "pdf": [
+    759.2,
+    2315.7
+   ],
+   "lonlat": [
+    75.81682,
+    26.91722
+   ],
+   "osm": "building 'Ajmeri Gate'",
+   "residual_m": 31.0
+  },
+  {
+   "label": "Sanganeri Gate",
+   "pdf": [
+    990.6,
+    2369.6
+   ],
+   "lonlat": [
+    75.82472,
+    26.91587
+   ],
+   "osm": "building 'Sanganeri Gate'",
+   "residual_m": 19.4
+  },
+  {
+   "label": "New Gate",
+   "pdf": [
+    877.7,
+    2334.6
+   ],
+   "lonlat": [
+    75.82022,
+    26.91615
+   ],
+   "osm": "node 'New Gate'",
+   "residual_m": 88.3
+  },
+  {
+   "label": "Tripoliya Gate",
+   "pdf": [
+    931.9,
+    2105.6
+   ],
+   "lonlat": [
+    75.82269,
+    26.92401
+   ],
+   "osm": "node 'Tripolia Gate'",
+   "residual_m": 25.8
+  },
+  {
+   "label": "Ghat Gate",
+   "pdf": [
+    1222.5,
+    2422.3
+   ],
+   "lonlat": [
+    75.83281,
+    26.91357
+   ],
+   "osm": "node 'Ghat Gate'",
+   "residual_m": 54.1
+  },
+  {
+   "label": "Badi Choupad",
+   "pdf": [
+    1048.7,
+    2137.6
+   ],
+   "lonlat": [
+    75.82671,
+    26.92258
+   ],
+   "osm": "locality 'Badi Chaupar'",
+   "residual_m": 21.2
+  },
+  {
+   "label": "Choti Chaupad",
+   "pdf": [
+    812.6,
+    2085.4
+   ],
+   "lonlat": [
+    75.81816,
+    26.92476
+   ],
+   "osm": "roundabout 'Chhoti Chaupar'",
+   "residual_m": 51.8
+  },
+  {
+   "label": "Jorawar Singh Gate",
+   "pdf": [
+    1229.2,
+    1764.5
+   ],
+   "lonlat": [
+    75.83333,
+    26.93483
+   ],
+   "osm": "node 'Jorawar Singh Gate'",
+   "residual_m": 84.2
+  },
+  {
+   "label": "Subhash Chowk",
+   "pdf": [
+    1186.3,
+    1940.1
+   ],
+   "lonlat": [
+    75.83182,
+    26.92922
+   ],
+   "osm": "locality 'Subhash Chowk'",
+   "residual_m": 57.5
+  },
+  {
+   "label": "Ramgarh Mod",
+   "pdf": [
+    1416.0,
+    1406.9
+   ],
+   "lonlat": [
+    75.83951,
+    26.9441
+   ],
+   "osm": "bus stop 'Ramgarh Mod'",
+   "residual_m": 95.9
+  },
+  {
+   "label": "Gate (Suraj Pol)",
+   "pdf": [
+    1558.0,
+    2253.4
+   ],
+   "lonlat": [
+    75.84494,
+    26.91916
+   ],
+   "osm": "monument 'Suraj Pol Gate'",
+   "residual_m": 54.4
+  },
+  {
+   "label": "GALTA GATE",
+   "pdf": [
+    1697.0,
+    2285.8
+   ],
+   "lonlat": [
+    75.8487,
+    26.91834
+   ],
+   "osm": "bus stop 'Galta Gate'",
+   "residual_m": 59.3
+  },
+  {
+   "label": "Chandpole Gate",
+   "pdf": [
+    548.2,
+    2023.0
+   ],
+   "lonlat": [
+    75.80948,
+    26.92651
+   ],
+   "osm": "unnamed historic=city_gate node",
+   "residual_m": 18.0
+  }
+ ],
+ "rms_m": 15.6,
+ "scale_m_per_pt": 3.4148,
+ "areas_ha": {
+  "core": 642.6,
+  "buffer": 1994.1
+ },
+ "inscribed_ha": {
+  "core": 710.0,
+  "buffer": 2205.0
+ }
+}
