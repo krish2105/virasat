@@ -83,25 +83,43 @@ environments; make a fresh account:
 DATABASE_URL="$RENDER_DB" uv run seed-admin <username>
 ```
 
-## 5. Deploy the frontend and connect the two
+## 5. The frontend (already deployed)
 
-From the repository root:
+The Vercel project exists and a production build is live:
+
+* project — `krishnamathur008-1499s-projects/virasat`
+* production alias — `https://virasat-krishnamathur008-1499s-projects.vercel.app`
+
+`API_URL` and `NEXT_PUBLIC_API_URL` are both set to `https://virasat-api.onrender.com`,
+the URL §1 produces **if Render gives the service that exact name**. If Render appended
+a suffix, correct them and redeploy:
 
 ```bash
-vercel --cwd web --prod
+cd web
+vercel env rm API_URL production && vercel env add API_URL production
+vercel env rm NEXT_PUBLIC_API_URL production && vercel env add NEXT_PUBLIC_API_URL production
+vercel --prod
 ```
 
-Then set both variables to the Render URL from §1 (Next.js reads `API_URL` on the
-server and `NEXT_PUBLIC_API_URL` in the browser) and redeploy:
+Note that `virasat.vercel.app` belongs to an unrelated project — it is not this app.
 
-```bash
-vercel env add API_URL production --cwd web
-vercel env add NEXT_PUBLIC_API_URL production --cwd web
-vercel --cwd web --prod
-```
+### Turn off Vercel Deployment Protection
 
-Finally set `CORS_ORIGINS` on the Render service to the Vercel origin (no trailing
-slash) and let it redeploy. Cookies are `Secure` in production via `COOKIE_SECURE=1`,
+New Vercel projects are protected by SSO, so the deployment currently redirects
+visitors to a Vercel login page rather than serving the site. For a demo that anyone
+can open, turn it off:
+
+**Vercel dashboard → the `virasat` project → Settings → Deployment Protection →
+Vercel Authentication → Disabled → Save.**
+
+There is no CLI command for this setting. Making the frontend public does not expose
+data: the officer queue, audit view and dossier endpoints all require a JWT, and the
+only public API route is `/map/aggregate`, which returns per-chowkri counts and is
+tested to leak no property-level fields.
+
+Finally set `CORS_ORIGINS` on the Render service to
+`https://virasat-krishnamathur008-1499s-projects.vercel.app` (no trailing slash) and
+let it redeploy. Cookies are `Secure` in production via `COOKIE_SECURE=1`,
 so the officer login only works over HTTPS — which both hosts give you.
 
 ## 6. Check it
