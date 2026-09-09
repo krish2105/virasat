@@ -32,27 +32,66 @@ is summarised below). Owner: Krishna Mathur (`krish2105`). Repo: github.com/kris
 
 Local dev servers: `.claude/launch.json` has `api` (uvicorn :8000) and `web` (next dev :3000). Officer for e2e: `e2e-officer` / `correct horse battery` (seeded in the local dev DB only; create with `uv run seed-admin`).
 
-## Known bugs / loose ends (do these first)
+## Session 2 (2026-09-09, evening) — what changed
 
-1. **Assess path crashed on a real run** with `StringDataRightTruncation (varchar 64)` — the local model returned a clause_id longer than 64 chars. Fixed in `agents/nodes/route.py` (only findings citing a retrieved clause are stored; raw drafts go to the audit payload) but **not yet re-run**. Re-run: `uv run agents --limit 1 --zone core --change-type VERTICAL_ADDITION`, then inspect `findings` and `audit_log`. Also consider logging the raw model output at debug level.
-2. Queue still holds ~79 `outside`-zone candidates with `triage_decision NULL` (the owner declined the bulk triage run). Run `uv run agents --limit 100 --zone outside` (no LLM, they drop) then `--zone buffer` / `--zone core` (LLM, ~1 min per change on qwen2.5:14b).
-3. The in-app browser lost the WebGL context; the scene now falls back to SVG on `webglcontextlost` and with `?nogl=1`. Verify the 3D scene visually in a real browser; not yet seen rendering.
-4. `chunk.py` leaves four oversized chunks (definitions, ACG-7); acceptable but could be split further.
-5. Chowkri **names** are an assumption (see DATA_CARD) — flag to the owner for Heritage Cell verification.
+**All four session-1 bugs are closed, and three more were found by running the
+system instead of its tests.**
 
-## NOT done (remaining plan, in order)
+| Was | Now |
+|---|---|
+| Bug 1: assess path crashed with `StringDataRightTruncation` | Fixed properly. The session-1 note claimed `route.py` filtered findings; it did not. `split_findings()` now stores only findings citing a retrieved clause, and puts the rest in the audit payload as `rejected_findings`. Reproduced first in `tests/integration/test_route_persist.py`. |
+| Bug 2: 79 untriaged `outside` candidates | Cleared. All 82 now `dropped`, with no model call. |
+| Bug 4: oversized definitions chunks "acceptable" | Not acceptable — they were the reason no finding could be stored. The two definitions sections (Regulations 3, ACG 11) were split per defined term into 41 pseudo-clauses with ids like `ACG-11 Should`. Still parsed into `clauses.jsonl`; **not indexed**. 178 parsed, 137 citable. |
+| — | New: `assess.v1.md` produced invented clause *names*. `assess.v2.md` prints the allowed ids explicitly and demands a verbatim copy. |
+| — | New: `evidence_ref` was only checked non-empty, so `"X"` satisfied the image-evidence hard rule. It must now equal the supplied crop. |
+| — | New: `verify.v1.md` listed its tests as questions and llama3.1:8b answered them into `notes`, so five of seven rejections were statements of *compliance* returned with verdict `fail`. `verify.v2.md` requires violations only, indexed and quoted; a `fail` naming no finding is now invalid output. |
+| CI never checked | It had failed on **every** push. `web/pnpm-workspace.yaml` was a stub with placeholder values and no `packages` field. Removed; the python job was always green. |
 
-1. **Deploy (S10, free tiers)** — files are ready: `requirements-api.txt` (slim, no torch), `settings.cookie_secure`, evidence PNGs committed. Steps:
-   a. Render: `create_postgres` (plan free, region singapore or oregon, version 16) → enable `postgis` + `vector` (may need dashboard; `query_render_postgres` is read-only) → `DATABASE_URL=<external url> uv run alembic upgrade head` from the Mac → copy data: `pg_dump --data-only -t officers -t runs -t tiles -t buildings -t changes -t clauses -t findings -t decisions -t audit_log` from local (port 5434) and restore.
-   b. Render web service via MCP `create_web_service` (runtime python, repo `https://github.com/krish2105/virasat`, buildCommand `pip install uv && uv pip install --system -r requirements-api.txt && uv pip install --system --no-deps .`, startCommand `uvicorn virasat.api.main:app --host 0.0.0.0 --port $PORT`, env: `DATABASE_URL`, `JWT_SECRET`, `COOKIE_SECURE=1`, `CORS_ORIGINS=<vercel url>`, `VIRASAT_CLOUD=0`). Note `/health` reports ollama=false there (expected; `mode` local without Ollama → status degraded; consider a `VIRASAT_API_ONLY=1` flag to report ok).
-   c. Vercel: deploy `web/` (root directory `web`), env `API_URL` + `NEXT_PUBLIC_API_URL` = Render URL. The Vercel MCP `list_teams` was rate-blocked at handoff time; `vercel` CLI or `create_git_project` also work.
-   d. Seed an officer on the hosted DB with `DATABASE_URL=... uv run seed-admin <name>`; run Lighthouse (a11y ≥ 95) on the Vercel URL.
-2. **README.md** (written last; structure in MASTER-PROMPT §19: deadline paragraph, architecture diagram, limitations up top, results table with BLOCKED cells, fairness table, ablations table BLOCKED, quickstart, sources+licences). Also remove `readme =` absence: pyproject currently has no readme field on purpose.
-3. **docs/VIVA.md** — answer the ten §19 questions from the real design (ICP georeferencing, metre tiles, verifier family split, BLOCKED discipline, chowkri-name risk).
-4. **Red-team set** `tests/fixtures/redteam/findings.jsonl` (50 broken findings against fixture clauses) — not built yet; catch-rate stays BLOCKED until 60 clause labels exist anyway.
-5. **Notifications digest** `uv run digest` is still a stub (`notify/digest.py`); in-app notifications on escalation work.
-6. Owner tasks (blocking metrics): Bhoonidhi registration, Mapillary token, 400 tile labels (`uv run label-tiles`), 60 clause labels (`uv run label-clauses`), verify chowkri names, `pre-commit install`.
-7. CI on GitHub has not been checked since the first push — look at the Actions tab; the `web` job needs `pnpm-lock.yaml` (committed) and the python job needs Docker for compose (available on ubuntu runners).
+### First real batch result
+
+101 candidates → **82 dropped** with no model call, **5 escalated direct**, **14
+assessed**. 11 findings stored, every one citing a retrieved clause and a real
+evidence crop; 12 drafts rejected before storage; **0 findings passed verification**.
+The verifier rejects on substance, typically a topically related clause offered for a
+specific claim. The owner chose to report this rather than re-run — it is the honest
+headline and it is in the README.
+
+13 of the 14 were verified under `verify.v1.md` and one under `v2`; `audit_log` records
+prompt versions per row, so they are distinguishable.
+
+### Owner decisions this session
+
+* Hosted database: **Render free Postgres**, despite the 30-day deletion clock. The
+  clock and the escape route are the first thing in `docs/DEPLOY.md`.
+* Deploy split: **Claude does Vercel, owner does Render.**
+* Labels: leave every metric BLOCKED; `label-clauses` verified working and documented.
+
+## Remaining work
+
+1. **Render (owner).** `render.yaml` is committed; `docs/DEPLOY.md` §1–4 and §6 are the
+   steps. The migration now creates `postgis` and `vector` itself, so there is no
+   extension step. Put the 30-day expiry in a calendar.
+2. **Vercel Deployment Protection (owner, one toggle).** The build is live at
+   `https://virasat-krishnamathur008-1499s-projects.vercel.app` but redirects visitors
+   to a Vercel login. Settings → Deployment Protection → Vercel Authentication →
+   Disabled. No CLI equivalent. (`virasat.vercel.app` is an unrelated project.)
+3. **Env correction (owner or Claude).** `API_URL` / `NEXT_PUBLIC_API_URL` are set to
+   `https://virasat-api.onrender.com`; correct them if Render appends a suffix, and set
+   `CORS_ORIGINS` on Render to the Vercel origin.
+4. **Lighthouse ≥ 95** on the deployed URL — cannot run until 2 is done.
+5. **Labels (owner, blocking every metric):** 400 tile labels (`uv run label-tiles`),
+   60 clause labels (`uv run label-clauses`). Nothing else unblocks the results table.
+6. **Red-team set** `tests/fixtures/redteam/findings.jsonl` — still not built.
+7. **`uv run digest`** is still a stub in `notify/digest.py`.
+8. **Owner tasks carried over:** Bhoonidhi registration, Mapillary token, verify the
+   chowkri names with the JNN Heritage Cell, `pre-commit install`.
+9. **Still open from session 1:** the 3D scene has not been seen rendering in a real
+   browser (SVG fallback works); the boundary is ~9.5 % small; `applies_to_change_type`
+   is regex-derived.
+
+**Trap to remember:** `python -m virasat.rag.index` deletes and rewrites `clauses`, and
+`findings.clause_id` is a foreign key onto it. Re-index before an assessment run, never
+after one.
 
 ## Commands that must stay green
 
